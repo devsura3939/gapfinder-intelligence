@@ -16,6 +16,16 @@ data_cache.db
 *.db
 .cache/
 .DS_Store
+.duckdb/
+.bubblewrap/
+.npm/
+.ssh/
+.gitconfig
+uploads/
+*.tsbuildinfo
+GapFinder_Android_PWA_Package.zip
 
 # Logs
 *.log
+.git-push-token
+.git-credentials

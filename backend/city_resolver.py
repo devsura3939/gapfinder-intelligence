@@ -18,38 +18,63 @@ HEADERS = {
 }
 
 KNOWN_CITIES_CATALOG = {
+    # Georgia
     "tbilisi": {"population": 1258526, "year": "2024", "source": "Municipal Census"},
     "batumi": {"population": 172100, "year": "2024", "source": "Municipal Census"},
     "kutaisi": {"population": 147600, "year": "2024", "source": "Municipal Census"},
+    "gori": {"population": 41933, "year": "2023", "source": "Geostat Georgia"},
+    "rustavi": {"population": 130100, "year": "2023", "source": "Geostat Georgia"},
+    "poti": {"population": 41500, "year": "2023", "source": "Geostat Georgia"},
+    "zugdidi": {"population": 41200, "year": "2023", "source": "Geostat Georgia"},
+    "telavi": {"population": 19600, "year": "2023", "source": "Geostat Georgia"},
+
+    # Spain
+    "valencia": {"population": 841558, "year": "2023", "source": "INE Spain"},
+    "barcelona": {"population": 1636000, "year": "2023", "source": "INE Spain"},
+    "madrid": {"population": 3223000, "year": "2023", "source": "INE Spain"},
+    "seville": {"population": 684000, "year": "2023", "source": "INE Spain"},
+    "zaragoza": {"population": 673000, "year": "2023", "source": "INE Spain"},
+    "malaga": {"population": 579000, "year": "2023", "source": "INE Spain"},
+    "bilbao": {"population": 345000, "year": "2023", "source": "INE Spain"},
+
+    # Germany
+    "berlin": {"population": 3755000, "year": "2024", "source": "Amt für Statistik Berlin"},
+    "munich": {"population": 1488000, "year": "2024", "source": "Bayerisches Landesamt"},
+    "hamburg": {"population": 1850000, "year": "2024", "source": "Statistik Nord"},
+    "frankfurt": {"population": 764000, "year": "2024", "source": "Hessen Statistik"},
+    "cologne": {"population": 1080000, "year": "2024", "source": "NRW Statistik"},
+    "stuttgart": {"population": 630000, "year": "2024", "source": "Statistik BW"},
+
+    # Poland
+    "warsaw": {"population": 1860000, "year": "2024", "source": "Statistics Poland"},
+    "krakow": {"population": 800000, "year": "2024", "source": "Statistics Poland"},
+    "wroclaw": {"population": 672000, "year": "2024", "source": "Statistics Poland"},
+    "poznan": {"population": 546000, "year": "2024", "source": "Statistics Poland"},
+    "gdansk": {"population": 486000, "year": "2024", "source": "Statistics Poland"},
+
+    # Other European Capitals & Major Cities
     "yerevan": {"population": 1092800, "year": "2024", "source": "National Statistics"},
     "sofia": {"population": 1280000, "year": "2024", "source": "National Statistics"},
     "tirana": {"population": 554300, "year": "2024", "source": "INSTAT Albania"},
     "zagreb": {"population": 769900, "year": "2024", "source": "Croatian Bureau of Statistics"},
     "belgrade": {"population": 1380000, "year": "2024", "source": "Statistical Office of Serbia"},
-    "warsaw": {"population": 1860000, "year": "2024", "source": "Statistics Poland"},
-    "krakow": {"population": 800000, "year": "2024", "source": "Statistics Poland"},
-    "berlin": {"population": 3755000, "year": "2024", "source": "Amt für Statistik Berlin"},
-    "munich": {"population": 1488000, "year": "2024", "source": "Bayerisches Landesamt"},
-    "hamburg": {"population": 1850000, "year": "2024", "source": "Statistik Nord"},
     "prague": {"population": 1309000, "year": "2024", "source": "Czech Statistical Office"},
     "budapest": {"population": 1752000, "year": "2024", "source": "Hungarian Central Statistical Office"},
     "vienna": {"population": 1982000, "year": "2024", "source": "Statistik Austria"},
     "brussels": {"population": 1220000, "year": "2024", "source": "Statbel"},
     "milan": {"population": 1378000, "year": "2024", "source": "ISTAT Italy"},
     "rome": {"population": 2873000, "year": "2024", "source": "ISTAT Italy"},
-    "madrid": {"population": 3223000, "year": "2024", "source": "INE Spain"},
-    "barcelona": {"population": 1636000, "year": "2024", "source": "INE Spain"},
-    "london": {"population": 8982000, "year": "2024", "source": "ONS UK"},
     "paris": {"population": 2148000, "year": "2024", "source": "INSEE France"},
-    "geneva": {"population": 203000, "year": "2024", "source": "FSO Switzerland"},
-    "zurich": {"population": 435000, "year": "2024", "source": "FSO Switzerland"},
-    "porto": {"population": 231000, "year": "2024", "source": "INE Portugal"},
-    "lisbon": {"population": 545000, "year": "2024", "source": "INE Portugal"},
-    "sarajevo": {"population": 275000, "year": "2024", "source": "BHAS"},
-    "cluj-napoca": {"population": 286000, "year": "2024", "source": "INS Romania"},
+    "lyon": {"population": 522000, "year": "2024", "source": "INSEE France"},
+    "marseille": {"population": 870000, "year": "2024", "source": "INSEE France"},
+    "london": {"population": 8982000, "year": "2024", "source": "ONS UK"},
+    "manchester": {"population": 553000, "year": "2024", "source": "ONS UK"},
+
+    # Americas & Asia
     "new york": {"population": 8336000, "year": "2024", "source": "US Census Bureau"},
     "los angeles": {"population": 3822000, "year": "2024", "source": "US Census Bureau"},
     "chicago": {"population": 2665000, "year": "2024", "source": "US Census Bureau"},
+    "austin": {"population": 974000, "year": "2024", "source": "US Census Bureau"},
     "toronto": {"population": 2794000, "year": "2024", "source": "Statistics Canada"},
     "montreal": {"population": 1762000, "year": "2024", "source": "Statistics Canada"},
     "tokyo": {"population": 13960000, "year": "2024", "source": "Statistics Bureau Japan"}
@@ -61,7 +86,7 @@ def resolve_city_metadata(country: str, city: str) -> Optional[Dict[str, Any]]:
     clean_country = country.strip()
     c_lower = clean_city.lower()
     
-    # 1. Query Nominatim for city administrative boundary and metadata
+    # Query Nominatim for city boundary and metadata
     nom_url = "https://nominatim.openstreetmap.org/search"
     params = {
         "q": f"{clean_city}, {clean_country}",
@@ -115,7 +140,6 @@ def resolve_city_metadata(country: str, city: str) -> Optional[Dict[str, Any]]:
         extratags = target.get("extratags", {})
         wikidata_id = extratags.get("wikidata")
         
-        # Check known catalog first
         population = None
         population_year = None
         population_source = None
@@ -141,7 +165,7 @@ def resolve_city_metadata(country: str, city: str) -> Optional[Dict[str, Any]]:
                 population_source = f"Wikidata ({wd_year})"
                 
         if not population:
-            population = 500000
+            population = 100000
             population_year = "2024"
             population_source = "Regional urban estimate"
             

@@ -25,6 +25,7 @@ export interface Place {
   operating_status: string;
   website: string | null;
   phone: string | null;
+  email: string | null;
   social: string | null;
   brand: string | null;
   address: string | null;

@@ -92,25 +92,63 @@ async def health_check():
 async def get_countries():
     """Popular countries catalog for dropdown selector."""
     popular = [
+        {"code": "BY", "name": "Belarus"},
         {"code": "GE", "name": "Georgia"},
         {"code": "ES", "name": "Spain"},
-        {"code": "PL", "name": "Poland"},
+        {"code": "LT", "name": "Lithuania"},
         {"code": "DE", "name": "Germany"},
+        {"code": "PL", "name": "Poland"},
         {"code": "UK", "name": "United Kingdom"},
         {"code": "FR", "name": "France"},
         {"code": "IT", "name": "Italy"},
-        {"code": "AM", "name": "Armenia"},
-        {"code": "BG", "name": "Bulgaria"},
-        {"code": "AL", "name": "Albania"},
-        {"code": "HR", "name": "Croatia"},
-        {"code": "RS", "name": "Serbia"},
+        {"code": "GR", "name": "Greece"},
+        {"code": "PT", "name": "Portugal"},
+        {"code": "NL", "name": "Netherlands"},
+        {"code": "BE", "name": "Belgium"},
+        {"code": "AT", "name": "Austria"},
+        {"code": "CH", "name": "Switzerland"},
+        {"code": "SE", "name": "Sweden"},
+        {"code": "NO", "name": "Norway"},
+        {"code": "DK", "name": "Denmark"},
+        {"code": "FI", "name": "Finland"},
         {"code": "CZ", "name": "Czech Republic"},
         {"code": "HU", "name": "Hungary"},
         {"code": "RO", "name": "Romania"},
+        {"code": "IE", "name": "Ireland"},
+        {"code": "UA", "name": "Ukraine"},
+        {"code": "KZ", "name": "Kazakhstan"},
+        {"code": "UZ", "name": "Uzbekistan"},
+        {"code": "AZ", "name": "Azerbaijan"},
+        {"code": "AM", "name": "Armenia"},
+        {"code": "TR", "name": "Turkey"},
         {"code": "US", "name": "United States"},
         {"code": "CA", "name": "Canada"},
+        {"code": "MX", "name": "Mexico"},
+        {"code": "BR", "name": "Brazil"},
+        {"code": "AR", "name": "Argentina"},
+        {"code": "CO", "name": "Colombia"},
+        {"code": "CL", "name": "Chile"},
+        {"code": "PE", "name": "Peru"},
         {"code": "JP", "name": "Japan"},
-        {"code": "AU", "name": "Australia"}
+        {"code": "KR", "name": "South Korea"},
+        {"code": "CN", "name": "China"},
+        {"code": "IN", "name": "India"},
+        {"code": "TH", "name": "Thailand"},
+        {"code": "VN", "name": "Vietnam"},
+        {"code": "MY", "name": "Malaysia"},
+        {"code": "ID", "name": "Indonesia"},
+        {"code": "PH", "name": "Philippines"},
+        {"code": "SG", "name": "Singapore"},
+        {"code": "AU", "name": "Australia"},
+        {"code": "NZ", "name": "New Zealand"},
+        {"code": "EG", "name": "Egypt"},
+        {"code": "NG", "name": "Nigeria"},
+        {"code": "KE", "name": "Kenya"},
+        {"code": "MA", "name": "Morocco"},
+        {"code": "ZA", "name": "South Africa"},
+        {"code": "IL", "name": "Israel"},
+        {"code": "AE", "name": "United Arab Emirates"},
+        {"code": "SA", "name": "Saudi Arabia"}
     ]
     return popular
 
@@ -499,7 +537,11 @@ async def export_excel(req: AnalyzeRequest):
     # --- Sheet 2: Businesses Directory ---
     ws2 = wb.create_sheet(title="Detected Establishments")
     
-    headers = ["Business Name", "Primary Category", "Basic Category", "Address / Locality", "Brand", "Confidence Score", "Website", "Phone", "Longitude", "Latitude", "Operating Status"]
+    headers = [
+        "Business Name", "Primary Category", "Basic Category", "Address / Locality", 
+        "Brand", "Phone", "Email", "Website", "Google Maps Profile URL", 
+        "Confidence Score", "Operating Status", "Longitude", "Latitude"
+    ]
     ws2.append(headers)
     for col_idx in range(1, len(headers) + 1):
         cell = ws2.cell(row=1, column=col_idx)
@@ -507,18 +549,21 @@ async def export_excel(req: AnalyzeRequest):
         cell.fill = header_fill
         
     for p in analysis["matched_places"]:
+        google_maps_url = f"https://www.google.com/maps/search/?api=1&query={p.get('name', '')} {p.get('address', '') or p.get('locality', '')}"
         row_vals = [
             p.get("name", "Unnamed"),
             p.get("taxonomy_primary", p.get("category_primary")),
             p.get("basic_category"),
             p.get("address") or p.get("locality") or "N/A",
             p.get("brand") or "N/A",
-            f"{p.get('confidence', 0.5) * 100:.0f}%",
-            p.get("website") or "N/A",
             p.get("phone") or "N/A",
+            p.get("email") or "N/A",
+            p.get("website") or "N/A",
+            google_maps_url,
+            f"{p.get('confidence', 0.5) * 100:.0f}%",
+            p.get("operating_status", "operating"),
             p.get("lon"),
-            p.get("lat"),
-            p.get("operating_status", "operating")
+            p.get("lat")
         ]
         ws2.append(row_vals)
         

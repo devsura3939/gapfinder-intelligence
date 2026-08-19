@@ -1,8 +1,8 @@
 """
 Overture Maps Places Data Provider.
 Queries DuckDB S3 GeoParquet for Overture Places with spatial filtering,
-taxonomy mapping, and data quality cleaning.
-Supports urban-core bounding box clamping for mega-metropolises.
+taxonomy mapping, contact details (phone, email, website), and data quality cleaning.
+Uses Shapely prepared geometry (prep) for ultra-fast point-in-polygon checks.
 """
 
 import logging
@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Any, Optional
 from shapely.geometry import shape, Point
+from shapely.prepared import prep
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,6 @@ def resolve_latest_release() -> str:
 
 
 def safe_list(val) -> list:
-    """Helper to safely convert array/iterable values or return empty list."""
     if val is None:
         return []
     if isinstance(val, (list, tuple)):
@@ -79,11 +79,11 @@ def fetch_city_places(
     bbox: List[float], 
     geojson_boundary: Optional[Dict[str, Any]] = None,
     min_confidence: float = 0.1,
-    max_limit: int = 40000
+    max_limit: int = 35000
 ) -> List[Dict[str, Any]]:
     """
     Fetch all Overture Places in a bounding box [minx, miny, maxx, maxy].
-    If bbox is excessively large (e.g. megacities), clamp to urban core radius.
+    Applies Shapely prepared polygon containment for high performance.
     """
     conn = get_duckdb_connection()
     release = resolve_latest_release()
@@ -91,7 +91,6 @@ def fetch_city_places(
     
     minx, miny, maxx, maxy = bbox
     
-    # Clamp bbox width/height to max 0.35 degrees (~35-40 km) to prevent megacity query hanging
     dx = maxx - minx
     dy = maxy - miny
     if dx > 0.35:
@@ -116,6 +115,7 @@ def fetch_city_places(
         operating_status,
         websites[1] as website,
         phones[1] as phone,
+        emails[1] as email,
         socials[1] as social,
         brand.names.primary as brand,
         addresses[1].freeform as address,
@@ -136,22 +136,27 @@ def fetch_city_places(
         logger.error(f"DuckDB Overture query error: {e}")
         return []
 
-    poly_geom = None
+    if df is None or getattr(df, 'empty', True):
+        logger.warning(f"No POIs returned from DuckDB query for bbox {bbox}.")
+        return []
+
+    prep_poly = None
     if geojson_boundary:
         try:
             poly_geom = shape(geojson_boundary)
+            prep_poly = prep(poly_geom)
         except Exception as pe:
             logger.warning(f"Failed to parse city boundary geojson: {pe}")
             
     places = []
     for row in df.itertuples():
-        lon, lat = row.lon, row.lat
-        if lon is None or lat is None:
+        lon, lat = getattr(row, 'lon', None), getattr(row, 'lat', None)
+        if lon is None or lat is None or pd.isna(lon) or pd.isna(lat):
             continue
             
-        if poly_geom and dx <= 0.35 and dy <= 0.35:
+        if prep_poly and dx <= 0.35 and dy <= 0.35:
             pt = Point(lon, lat)
-            if not poly_geom.contains(pt):
+            if not prep_poly.contains(pt):
                 continue
                 
         hier = safe_list(getattr(row, 'taxonomy_hierarchy', None))
@@ -164,6 +169,7 @@ def fetch_city_places(
         op_stat = getattr(row, 'operating_status', None)
         web = getattr(row, 'website', None)
         ph = getattr(row, 'phone', None)
+        em = getattr(row, 'email', None)
         soc = getattr(row, 'social', None)
         br = getattr(row, 'brand', None)
         addr = getattr(row, 'address', None)
@@ -171,7 +177,7 @@ def fetch_city_places(
         nm = getattr(row, 'name', None)
         
         place_obj = {
-            "id": str(row.id),
+            "id": str(getattr(row, 'id', '')),
             "name": str(nm) if (nm is not None and str(nm) != 'nan') else "Unnamed Business",
             "category_primary": str(c_prim) if (c_prim is not None and str(c_prim) != 'nan') else "unclassified",
             "category_alternates": [str(c) for c in alt_cats if c is not None],
@@ -182,6 +188,7 @@ def fetch_city_places(
             "operating_status": str(op_stat) if (op_stat is not None and str(op_stat) != 'nan') else "operating",
             "website": str(web) if (web is not None and str(web) != 'nan') else None,
             "phone": str(ph) if (ph is not None and str(ph) != 'nan') else None,
+            "email": str(em) if (em is not None and str(em) != 'nan') else None,
             "social": str(soc) if (soc is not None and str(soc) != 'nan') else None,
             "brand": str(br) if (br is not None and str(br) != 'nan') else None,
             "address": str(addr) if (addr is not None and str(addr) != 'nan') else None,
